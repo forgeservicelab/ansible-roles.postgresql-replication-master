@@ -1,0 +1,38 @@
+---
+# tasks file for postgresql-replication-master
+- name: Set replication parameters on postgre config
+  lineinfile:
+    dest: "{{ postgresql_config_file }}"
+    regexp: '^({{ item.key }}\s*=).*'
+    backrefs: yes
+    line: '\1 {{ item.value }}'
+    state: present
+  with_items:
+    - "{{ replication_config }}"
+
+- name: Allow replication standby access
+  lineinfile:
+    dest: "{{ postgresql_hba_file }}"
+    line: "hostssl	replication	all 	{{ item }}	trust"
+    state: present
+  with_items:
+    - "{{ standby_definitions }}"
+
+- name: Stop postgresql service
+  service:
+    name: postgresql
+    state: stopped
+
+- name: Fetch postgresql data
+  synchronize:
+    src: "{{ postgresql_data_dir }}"
+    dest: "{{ control_dump_location }}"
+    mode: pull
+    recursive: yes
+    rsync_opts: --exclude=pg_xlog
+  sudo_user: postgres
+
+- name: Start postgresql service
+  service:
+    name: postgresql
+    state: started
