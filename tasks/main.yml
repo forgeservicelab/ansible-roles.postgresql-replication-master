@@ -2,7 +2,7 @@
 # tasks file for postgresql-replication-master
 - name: Create replication role
   postgresql_user:
-    name: repication
+    name: replication
     role_attr_flags: LOGIN,REPLICATION
   sudo_user: postgres
 
