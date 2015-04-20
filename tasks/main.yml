@@ -1,5 +1,11 @@
 ---
 # tasks file for postgresql-replication-master
+- name: Create replication role
+  postgresql_user:
+    name: repication
+    role_attr_flags: LOGIN,REPLICATION
+  sudo_user: postgres
+
 - name: Set replication parameters on postgre config
   lineinfile:
     dest: "{{ postgresql_config_file }}"
@@ -17,22 +23,3 @@
     state: present
   with_items:
     - "{{ standby_definitions }}"
-
-- name: Stop postgresql service
-  service:
-    name: postgresql
-    state: stopped
-
-- name: Fetch postgresql data
-  synchronize:
-    src: "{{ postgresql_data_dir }}"
-    dest: "{{ control_dump_location }}"
-    mode: pull
-    recursive: yes
-    rsync_opts: --exclude=pg_xlog
-  sudo_user: postgres
-
-- name: Start postgresql service
-  service:
-    name: postgresql
-    state: started
